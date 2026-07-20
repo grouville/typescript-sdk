@@ -107,6 +107,24 @@ type E2e {
   }
 
   """
+  Mod lookup should select the nearest enclosing module config even when the
+  nearer module and its parent use different config filenames.
+  """
+  pub mixedConfigModuleLookupCheck: Void @check {
+    let ws = directory
+      .withNewFile("parent/dagger-module.toml", "[runtime]\nsource = \"typescript\"\n")
+      .withNewFile("parent/child/dagger.json", "{\"sdk\":{\"source\":\"typescript\"}}")
+      .withNewFile("parent/child/nested/.keep", "")
+      .asWorkspace
+
+    let nested = typescriptSdk.mod(ws, path: "parent/child/nested")
+
+    assert(nested.rootPath == "parent/child", "find-up lookup should prefer the nearer dagger.json over an ancestor dagger-module.toml")
+
+    null
+  }
+
+  """
   The SDK should report the builtin runtime it targets.
   """
   pub targetRuntimeCheck: Void @check {
